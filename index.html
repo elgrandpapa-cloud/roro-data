@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RORO Console</title>
+
+<!-- iOS home-screen / PWA hints -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RORO">
+<meta name="theme-color" content="#0B0E14">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0B0E14;
+    --panel:#11151E;
+    --panel-2:#161B27;
+    --line:#222A3A;
+    --line-soft:#1A2130;
+    --txt:#E6EAF2;
+    --txt-dim:#9AA4B8;
+    --txt-mute:#5E6779;
+    --on:#E8B04B;      /* risk-on : gold/amber (heat) */
+    --on-hot:#F5A623;
+    --off:#3DA8E8;     /* risk-off : cyan (cold/haven) */
+    --off-cold:#2E8FD0;
+    --neutral:#6B7488;
+    --gold-accent:#F2C14E;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 12px 40px -18px rgba(0,0,0,.8);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(232,176,75,.06), transparent 60%),
+      radial-gradient(1000px 500px at -10% 110%, rgba(61,168,232,.06), transparent 60%),
+      var(--bg);
+    color:var(--txt);
+    font-family:"Space Grotesk", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100dvh;
+    padding:
+      calc(env(safe-area-inset-top) + 14px)
+      calc(env(safe-area-inset-right) + 14px)
+      calc(env(safe-area-inset-bottom) + 28px)
+      calc(env(safe-area-inset-left) + 14px);
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  .mono{font-family:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .brand{display:flex;align-items:baseline;gap:9px}
+  .brand h1{font-size:19px;font-weight:700;letter-spacing:.14em;margin:0;text-transform:uppercase}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--on);box-shadow:0 0 14px var(--on);animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .brand small{color:var(--txt-mute);letter-spacing:.18em;font-size:10px;text-transform:uppercase}
+  .demo-pill{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;color:var(--off);
+    border:1px solid var(--off-cold);border-radius:999px;padding:4px 9px;background:rgba(61,168,232,.07);white-space:nowrap;cursor:help}
+
+  /* composite hero */
+  .hero{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);
+    border-radius:var(--r);padding:20px 18px 16px;box-shadow:var(--shadow);margin-bottom:14px;position:relative;overflow:hidden}
+  .hero .eyebrow{color:var(--txt-mute);letter-spacing:.2em;font-size:10px;text-transform:uppercase;margin-bottom:6px}
+  .gaugewrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .gauge{flex:0 0 auto}
+  .readout{flex:1 1 180px;min-width:160px}
+  .readout .score{font-family:"IBM Plex Mono",monospace;font-size:52px;font-weight:600;line-height:.9;letter-spacing:-.02em}
+  .readout .label{font-size:15px;font-weight:600;margin-top:8px;letter-spacing:.02em}
+  .readout .delta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--txt-dim);margin-top:5px}
+  .axislabels{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;color:var(--txt-mute);
+    text-transform:uppercase;margin-top:14px}
+
+  /* regime banner */
+  .regime{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+    border-left-width:3px;border-radius:var(--r);padding:13px 15px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .regime .rtitle{font-size:13px;font-weight:600;letter-spacing:.02em;margin:0 0 3px}
+  .regime .rbody{font-size:12.5px;color:var(--txt-dim);line-height:1.5;margin:0}
+  .regime .rmeta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--txt-mute);margin-top:6px}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+  .tabs button{flex:1;background:transparent;border:0;color:var(--txt-dim);font-family:inherit;font-size:12.5px;font-weight:600;
+    letter-spacing:.04em;padding:9px 4px;border-radius:9px;cursor:pointer;transition:.18s}
+  .tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+
+  /* genre cards */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+  .genre{padding:14px 15px;border-bottom:1px solid var(--line-soft);cursor:pointer;transition:background .15s}
+  .genre:last-child{border-bottom:0}
+  .genre:hover{background:var(--panel-2)}
+  .genre .top{display:flex;align-items:center;gap:12px}
+  .genre .nm{flex:1 1 auto;min-width:0}
+  .genre .nm b{font-size:14px;font-weight:600;display:block}
+  .genre .nm span{font-size:10.5px;color:var(--txt-mute);letter-spacing:.04em}
+  .genre .sc{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;text-align:right;min-width:54px}
+  .genre .dl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--txt-dim);text-align:right;min-width:46px}
+  .spark{width:62px;height:30px;flex:0 0 auto}
+
+  /* bipolar bar */
+  .bbar{position:relative;height:8px;border-radius:6px;margin-top:11px;
+    background:linear-gradient(90deg, rgba(61,168,232,.22), rgba(107,116,136,.10) 50%, rgba(232,176,75,.22))}
+  .bbar .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line)}
+  .bbar .needle{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%);
+    border:2px solid var(--bg);transition:left .5s cubic-bezier(.22,1,.36,1)}
+
+  .drivers{max-height:0;overflow:hidden;transition:max-height .35s ease}
+  .drivers.open{max-height:340px}
+  .drivers .inner{padding:4px 2px 6px}
+  .drow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed var(--line-soft)}
+  .drow .dn{flex:1;font-size:12px;color:var(--txt-dim)}
+  .drow .dv{font-family:"IBM Plex Mono",monospace;font-size:12px}
+  .drow .tag{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;font-weight:600}
+
+  /* comparison view */
+  .cmp{padding:18px 16px}
+  .cmprow{display:grid;grid-template-columns:84px 1fr 44px;align-items:center;gap:10px;margin:13px 0}
+  .cmprow .cnm{font-size:12px;color:var(--txt-dim);text-align:right}
+  .cmprow .cv{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;text-align:right}
+  .cmpaxis{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;color:var(--txt-mute);
+    text-transform:uppercase;border-top:1px solid var(--line-soft);padding-top:8px;margin-top:6px;
+    margin-left:94px;margin-right:54px}
+
+  /* heatmap */
+  .heat{padding:16px 14px 18px;overflow-x:auto}
+  table.hm{border-collapse:separate;border-spacing:3px;margin:0 auto}
+  table.hm th{font-size:10px;font-weight:600;color:var(--txt-mute);font-family:"IBM Plex Mono",monospace;
+    padding:0;text-align:center;height:22px}
+  table.hm th.row{text-align:right;padding-right:7px;white-space:nowrap}
+  table.hm td{width:34px;height:34px;border-radius:6px;text-align:center;vertical-align:middle;
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;color:#0B0E14}
+  .legend{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:14px;font-size:10.5px;color:var(--txt-mute)}
+  .legend .bar{height:8px;width:130px;border-radius:5px;background:linear-gradient(90deg,#3DA8E8,#2A3142 50%,#E8B04B)}
+
+  .note{font-size:11px;color:var(--txt-mute);line-height:1.55;margin:14px 4px 0}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:0 2px}
+  .refresh{background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);font-family:"IBM Plex Mono",monospace;
+    font-size:11px;letter-spacing:.06em;padding:8px 13px;border-radius:10px;cursor:pointer}
+  .refresh:active{transform:scale(.97)}
+  .stamp{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--txt-mute)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <span class="dot" aria-hidden="true"></span>
+      <h1>RORO Console</h1>
+      <small>risk regime</small>
+    </div>
+    <span class="demo-pill" title="表示中の数値はデモデータです。loadData() に実データを差すとそのまま動きます。">DEMO DATA</span>
+  </header>
+
+  <!-- composite hero -->
+  <section class="hero">
+    <div class="eyebrow">Composite risk score</div>
+    <div class="gaugewrap">
+      <svg class="gauge" width="150" height="92" viewBox="0 0 150 92" id="dial"></svg>
+      <div class="readout">
+        <div class="score mono" id="cScore">—</div>
+        <div class="label" id="cLabel">—</div>
+        <div class="delta mono" id="cDelta">—</div>
+      </div>
+    </div>
+    <div class="axislabels"><span>◀ Risk-off ・ 退避</span><span>選好 ・ Risk-on ▶</span></div>
+  </section>
+
+  <!-- regime banner -->
+  <div class="regime" id="regime">
+    <div style="flex:1">
+      <p class="rtitle" id="regTitle">—</p>
+      <p class="rbody" id="regBody">—</p>
+      <div class="rmeta" id="regMeta"></div>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="genres">ジャンル別</button>
+    <button role="tab" aria-selected="false" data-tab="compare">横断比較</button>
+    <button role="tab" aria-selected="false" data-tab="pattern">連動パターン</button>
+  </div>
+
+  <div id="view-genres" class="panel"></div>
+  <div id="view-compare" class="panel" style="display:none"></div>
+  <div id="view-pattern" class="panel" style="display:none"></div>
+
+  <p class="note" id="noteText"></p>
+
+  <div class="foot">
+    <button class="refresh" id="refreshBtn">↻ 再評価</button>
+    <span class="stamp" id="stamp"></span>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   RORO Console — risk-on / risk-off across asset classes
+   ------------------------------------------------------------
+   SCORE MODEL (transparent, tunable):
+     each genre has signals -> each signal maps to a risk-on
+     contribution in [-1, +1]  (+1 = maximally risk-on)
+     genre score = 50 + 50 * weightedAvg(signal contributions)
+     composite   = weightedAvg(genre scores)
+   50 = neutral ・ >50 risk-on ・ <50 risk-off
+   ------------------------------------------------------------
+   LIVE DATA: replace loadData() (see bottom). Everything else
+   downstream is real logic and will work unchanged.
+   ============================================================ */
+
+/* ---- deterministic-ish PRNG so a load is stable; reseed on refresh ---- */
+let SEED = Math.floor(Math.random()*1e9);
+function rng(){ SEED = (SEED*1664525 + 1013904223) >>> 0; return SEED/4294967296; }
+function gauss(){ return (rng()+rng()+rng()+rng()-2)/2; }
+
+/* ---- LIVE data (data.json) — null のときは従来どおり合成デモ ---- */
+let LIVE = null;
+/* 実データ系列を長さ n に整える（短ければ先頭値で左詰めパッド） */
+function normSeries(s, n){
+  if(!s || !s.length) return null;
+  if(s.length >= n) return s.slice(s.length-n);
+  return new Array(n-s.length).fill(s[0]).concat(s);
+}
+
+/* ---- color helpers: cool(off) -> neutral -> warm(on) ---- */
+function lerp(a,b,t){return a+(b-a)*t;}
+function hex(n){return Math.round(n).toString(16).padStart(2,'0');}
+const OFF=[61,168,232], NEU=[107,116,136], ON=[232,176,75];
+function scoreColor(s){ // s 0..100
+  const t = s/100;
+  let c;
+  if(t<0.5){ const k=t/0.5; c=[lerp(OFF[0],NEU[0],k),lerp(OFF[1],NEU[1],k),lerp(OFF[2],NEU[2],k)]; }
+  else{ const k=(t-0.5)/0.5; c=[lerp(NEU[0],ON[0],k),lerp(NEU[1],ON[1],k),lerp(NEU[2],ON[2],k)]; }
+  return '#'+hex(c[0])+hex(c[1])+hex(c[2]);
+}
+function labelFor(s){
+  if(s>=70) return '強いリスクオン';
+  if(s>=58) return 'リスクオン';
+  if(s>=42) return '中立';
+  if(s>=30) return 'リスクオフ';
+  return '強いリスクオフ';
+}
+
+/* ============================================================
+   GENRE + SIGNAL DEFINITIONS
+   sign: +1 means "value up => risk-on"; -1 means "value up => risk-off"
+   ============================================================ */
+/* signals に id を付与（roro_feed.py が data.json で .last を供給する際のキー）。
+   描画・スコアロジックは id を参照しないため非破壊。base/vol/ref/span はデモ表示用。
+   クレジット(cd)は無料ソース無しのため v1 では除外（将来 FRED キーで復活可）。 */
+const GENRES = [
+  { key:'eq',  name:'株式',         sub:'S&P500 / NASDAQ / VIX', w:1.1,
+    signals:[
+      {id:'eq_sp500', n:'S&P 500 (5d)', unit:'%', sign:+1, w:1,   base:0.6, vol:1.4},
+      {id:'eq_nasdaq',n:'NASDAQ (5d)',  unit:'%', sign:+1, w:0.9, base:0.8, vol:1.8},
+      {id:'vol_vix',  n:'VIX',          unit:'',  sign:-1, w:1.1, base:18,  vol:3.2, ref:18, span:9},
+    ]},
+  { key:'rt',  name:'債券・金利',   sub:'米10年 / 米30年 利回り', w:1.0,
+    signals:[
+      {id:'rt_us10y', n:'米10年利回り Δ', unit:'bp',sign:+1, w:1,   base:2, vol:6},
+      {id:'rt_usbond',n:'米30年利回り Δ', unit:'bp',sign:+1, w:0.8, base:2, vol:5},
+    ]},
+  { key:'fx',  name:'為替',         sub:'USDJPY / AUDJPY / DXY / USDCHF', w:1.0,
+    signals:[
+      {id:'fx_usdjpy',n:'USD/JPY (5d)', unit:'%', sign:+1,  w:1,   base:0.3, vol:0.9},
+      {id:'fx_audjpy',n:'AUD/JPY (5d)', unit:'%', sign:+1.1,w:1.1, base:0.4, vol:1.1},
+      {id:'fx_dxy',   n:'DXY (5d)',     unit:'%', sign:-0.5,w:0.6, base:0.1, vol:0.7},
+      {id:'fx_usdchf',n:'USD/CHF (5d)', unit:'%', sign:+0.6,w:0.6, base:0.1, vol:0.8},
+    ]},
+  { key:'au',  name:'ゴールド',     sub:'金/銀 ・ 銅/金 ・ 金', w:1.2,
+    signals:[
+      {id:'ratio_gold_silver',n:'金/銀レシオ',     unit:'',  sign:-1, w:0.9, base:63,  vol:2.0, ref:63, span:8},
+      {id:'ratio_copper_gold',n:'銅/金レシオ (5d)', unit:'%', sign:+1, w:1.1, base:-0.2,vol:1.3},
+      {id:'au_gold',          n:'金 (5d)',          unit:'%', sign:-1, w:0.8, base:0.1, vol:1.5},
+    ]},
+  { key:'cm',  name:'コモディティ', sub:'WTI / Brent / 銅', w:0.9,
+    signals:[
+      {id:'cm_wti',    n:'WTI 原油 (5d)', unit:'%', sign:+1, w:1,   base:0.2, vol:2.4},
+      {id:'cm_brent',  n:'Brent 原油 (5d)',unit:'%',sign:+1, w:1,   base:0.2, vol:2.3},
+      {id:'cm_copper', n:'銅 (5d)',       unit:'%', sign:+1, w:1,   base:0.3, vol:1.9},
+    ]},
+  { key:'cr',  name:'クリプト',     sub:'BTC / ETH / F&G', w:0.8,
+    signals:[
+      {id:'cr_btc',  n:'BTC (5d)',     unit:'%', sign:+1, w:1,   base:1.0, vol:4.5},
+      {id:'cr_eth',  n:'ETH (5d)',     unit:'%', sign:+1, w:0.8, base:1.0, vol:5.0},
+      {id:'cr_fng',  n:'Crypto F&G',   unit:'',  sign:+1, w:1.1, base:50,  vol:11, ref:50, span:50},
+    ]},
+];
+
+/* ---- map a raw signal value to risk-on contribution [-1,1] ---- */
+function contrib(sig, val){
+  let z;
+  if(sig.ref!==undefined){          // level-type signal: distance from ref, scaled by span
+    z = (val - sig.ref)/sig.span;   // +ve if above ref
+  } else {                           // change-type signal: % or bp move, soft-scaled
+    const scale = sig.unit==='bp' ? 8 : 1.6;
+    z = val/scale;
+  }
+  z = Math.tanh(z) * sig.sign;       // squash + apply direction
+  return Math.max(-1, Math.min(1, z));
+}
+
+/* ============================================================
+   BUILD A SNAPSHOT (60-day series per signal -> genre series)
+   In live mode loadData() supplies the latest values; here we
+   synthesize a coherent macro environment.
+   ============================================================ */
+function buildSnapshot(){
+  const N = 60;
+  // a shared latent "macro risk" walk so genres co-move realistically
+  let macro = gauss()*0.5;
+  const macroSeries=[];
+  for(let i=0;i<N;i++){ macro += gauss()*0.28 - macro*0.05; macroSeries.push(macro); }
+
+  // regime knob: how tightly genres follow the macro factor (RORO intensity)
+  const cohesion = 0.45 + rng()*0.5; // 0.45..0.95
+
+  const genres = GENRES.map(g=>{
+    const sigSeries = g.signals.map(sig=>{
+      // 実データ(data.json)があれば優先。無ければ従来の合成。
+      const live = LIVE && LIVE.signals ? LIVE.signals[sig.id] : null;
+      const liveArr = live ? normSeries(live.series, N) : null;
+      let arr;
+      if(liveArr){
+        arr = liveArr;
+      } else {
+        arr=[];
+        for(let i=0;i<N;i++){
+          // each signal = its own drift + macro-linked component + idiosyncratic noise
+          const macroPull = macroSeries[i] * sig.vol * cohesion * (sig.ref!==undefined? sig.span*0.06 : 1);
+          const idio = gauss()*sig.vol*(1-cohesion);
+          const center = sig.ref!==undefined ? sig.base : sig.base;
+          arr.push(center + macroPull + idio);
+        }
+      }
+      return {sig, series:arr, last:arr[N-1], prev:arr[N-2]};
+    });
+    // genre score series
+    const wsum = g.signals.reduce((a,s)=>a+s.w,0);
+    const scoreSeries=[];
+    for(let i=0;i<N;i++){
+      let acc=0;
+      sigSeries.forEach(ss=>{ acc += contrib(ss.sig, ss.series[i]) * ss.sig.w; });
+      scoreSeries.push(50 + 50*(acc/wsum));
+    }
+    return {def:g, sigSeries, scoreSeries,
+            score:scoreSeries[N-1], prevScore:scoreSeries[N-2]};
+  });
+
+  // composite
+  const W = GENRES.reduce((a,g)=>a+g.w,0);
+  const compSeries=[];
+  for(let i=0;i<N;i++){
+    let acc=0; genres.forEach(gg=>acc+=gg.scoreSeries[i]*gg.def.w);
+    compSeries.push(acc/W);
+  }
+  // correlation matrix over last 30 days of genre score series
+  const win=30;
+  const series = genres.map(gg=>gg.scoreSeries.slice(-win));
+  const corr = correlationMatrix(series);
+  // average absolute cross-correlation = RORO intensity
+  let s=0,c=0;
+  for(let i=0;i<corr.length;i++)for(let j=0;j<corr.length;j++) if(i<j){s+=Math.abs(corr[i][j]);c++;}
+  const roro = s/c;
+
+  return {genres, compSeries, comp:compSeries[N-1], prevComp:compSeries[N-2], corr, roro};
+}
+
+function correlationMatrix(series){
+  const k=series.length;
+  const means=series.map(a=>a.reduce((x,y)=>x+y,0)/a.length);
+  const M=Array.from({length:k},()=>new Array(k).fill(0));
+  for(let i=0;i<k;i++){
+    for(let j=0;j<k;j++){
+      let cov=0,vi=0,vj=0;
+      for(let t=0;t<series[i].length;t++){
+        const di=series[i][t]-means[i], dj=series[j][t]-means[j];
+        cov+=di*dj; vi+=di*di; vj+=dj*dj;
+      }
+      M[i][j]= (vi&&vj)? cov/Math.sqrt(vi*vj) : 0;
+    }
+  }
+  return M;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function fmt(v,unit){
+  const sign = v>0?'+':'';
+  if(unit==='%') return sign+v.toFixed(2)+'%';
+  if(unit==='bp')return sign+v.toFixed(0)+'bp';
+  return v.toFixed(0);
+}
+function spark(series, w=62, h=30){
+  const min=Math.min(...series), max=Math.max(...series), span=(max-min)||1;
+  const pts=series.map((v,i)=>{
+    const x=(i/(series.length-1))*w;
+    const y=h-2-((v-min)/span)*(h-4);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  const last=series[series.length-1];
+  const col=scoreColor(last);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+}
+function dial(score){
+  // semicircle 180deg, needle from off(left) to on(right)
+  const cx=75, cy=82, r=62;
+  const ang = Math.PI - (score/100)*Math.PI; // 100->0(right), 0->PI(left)
+  const nx = cx + r*Math.cos(ang)*0.86, ny = cy - r*Math.sin(ang)*0.86;
+  // arc background segments
+  const seg=(a0,a1,col)=>{
+    const x0=cx+r*Math.cos(a0),y0=cy-r*Math.sin(a0);
+    const x1=cx+r*Math.cos(a1),y1=cy-r*Math.sin(a1);
+    return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  };
+  const col=scoreColor(score);
+  return `
+    ${seg(Math.PI, Math.PI*0.66, '#2E8FD0')}
+    ${seg(Math.PI*0.66, Math.PI*0.34, '#3A4254')}
+    ${seg(Math.PI*0.34, 0, '#E8B04B')}
+    <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${col}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="${col}"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="none" stroke="#0B0E14" stroke-width="1.5"/>`;
+}
+
+let SNAP=null;
+function renderAll(){
+  SNAP = buildSnapshot();
+  const S=SNAP;
+
+  // hero
+  document.getElementById('dial').innerHTML = dial(S.comp);
+  const cs=document.getElementById('cScore');
+  cs.textContent=S.comp.toFixed(0); cs.style.color=scoreColor(S.comp);
+  document.getElementById('cLabel').textContent=labelFor(S.comp);
+  const cd=S.comp-S.prevComp;
+  document.getElementById('cDelta').textContent=`前日比 ${cd>=0?'+':''}${cd.toFixed(1)} ・ 0=完全リスクオフ / 100=完全リスクオン`;
+
+  // regime banner
+  renderRegime(S);
+
+  // genres list
+  renderGenres(S);
+  renderCompare(S);
+  renderPattern(S);
+
+  // note + stamp
+  document.getElementById('noteText').innerHTML =
+    'スコアは各シグナルのリスクオン寄与（−1〜+1）を加重平均し 0〜100 に写像したもの。'+
+    '50＝中立、上＝リスクオン（選好）、下＝リスクオフ（退避）。'+
+    '「連動パターン」のヒートマップはジャンル間の30日相関で、全体が高相関＝RORO相場（単一マクロ要因が支配）を示します。'+
+    '<b style="color:var(--off)">表示はデモデータ</b>です — 末尾の loadData() に実データを差すと全ロジックそのまま稼働します。';
+  const now=new Date();
+  document.getElementById('stamp').textContent='snapshot '+now.toTimeString().slice(0,5)+' · demo';
+}
+
+function renderRegime(S){
+  const roro=S.roro; // 0..1
+  const tilt = S.comp>=50?'リスクオン':'リスクオフ';
+  let title, body, color;
+  if(roro>=0.62){
+    color='var(--on)';
+    title=`RORO相場（${tilt}に一体化）`;
+    body='各資産クラスが一塊で動いており、相場は単一のマクロ要因に支配されています。分散効果は効きづらく、ゴールドも個別材料より全体センチメントで振られやすい局面。';
+  }else if(roro>=0.4){
+    color='var(--neutral)';
+    title='移行的レジーム';
+    body='連動はやや強いものの一枚岩ではありません。ジャンル間の食い違い（ダイバージェンス）が次の転換の手掛かりになりやすい局面です。';
+  }else{
+    color='var(--off)';
+    title='個別相場（連動低下）';
+    body='ジャンルごとに独立して動いており、横断的なリスクオン/オフより各市場固有の材料が支配的。クロスアセットのヘッジが効きやすい局面です。';
+  }
+  document.getElementById('regime').style.borderLeftColor=color;
+  document.getElementById('regTitle').textContent=title;
+  document.getElementById('regTitle').style.color=color;
+  document.getElementById('regBody').textContent=body;
+  document.getElementById('regMeta').textContent=`RORO強度 ${(roro*100).toFixed(0)} / 100 ・ 平均クロス相関 ${roro.toFixed(2)}`;
+}
+
+function renderGenres(S){
+  const el=document.getElementById('view-genres');
+  el.innerHTML='';
+  S.genres.forEach((g,gi)=>{
+    const sc=g.score, d=sc-g.prevScore;
+    const col=scoreColor(sc);
+    const needleLeft=sc; // 0..100 -> percent
+    const div=document.createElement('div');
+    div.className='genre';
+    div.innerHTML=`
+      <div class="top">
+        <div class="nm"><b>${g.def.name}</b><span>${g.def.sub}</span></div>
+        ${spark(g.scoreSeries.slice(-30))}
+        <div>
+          <div class="sc" style="color:${col}">${sc.toFixed(0)}</div>
+          <div class="dl" style="color:${d>=0?'var(--on)':'var(--off)'}">${d>=0?'▲':'▼'}${Math.abs(d).toFixed(1)}</div>
+        </div>
+      </div>
+      <div class="bbar"><div class="mid"></div>
+        <div class="needle" style="left:${needleLeft}%;background:${col};box-shadow:0 0 10px ${col}"></div></div>
+      <div class="drivers" id="dr-${g.def.key}"><div class="inner">
+        ${g.sigSeries.map(ss=>{
+          const c=contrib(ss.sig, ss.last); // -1..1
+          const tagOn = c>=0.12, tagOff = c<=-0.12;
+          const tagCol = tagOn?'var(--on)':tagOff?'var(--off)':'var(--neutral)';
+          const tagBg  = tagOn?'rgba(232,176,75,.13)':tagOff?'rgba(61,168,232,.13)':'rgba(107,116,136,.13)';
+          const tagTxt = tagOn?'ON':tagOff?'OFF':'中立';
+          return `<div class="drow">
+            <span class="dn">${ss.sig.n}</span>
+            <span class="dv">${fmt(ss.last, ss.sig.unit)}</span>
+            <span class="tag" style="color:${tagCol};background:${tagBg}">${tagTxt}</span>
+          </div>`;
+        }).join('')}
+      </div></div>`;
+    div.addEventListener('click',()=>{
+      document.getElementById('dr-'+g.def.key).classList.toggle('open');
+    });
+    el.appendChild(div);
+  });
+}
+
+function renderCompare(S){
+  const el=document.getElementById('view-compare');
+  // sort by score so divergence reads at a glance
+  const sorted=[...S.genres].sort((a,b)=>b.score-a.score);
+  el.innerHTML=`<div class="cmp">
+    ${sorted.map(g=>{
+      const col=scoreColor(g.score);
+      return `<div class="cmprow">
+        <div class="cnm">${g.def.name}</div>
+        <div class="bbar"><div class="mid"></div>
+          <div class="needle" style="left:${g.score}%;background:${col};box-shadow:0 0 10px ${col}"></div></div>
+        <div class="cv" style="color:${col}">${g.score.toFixed(0)}</div>
+      </div>`;
+    }).join('')}
+    <div class="cmpaxis"><span>◀ OFF</span><span>中立</span><span>ON ▶</span></div>
+  </div>`;
+}
+
+function renderPattern(S){
+  const el=document.getElementById('view-pattern');
+  const labels=S.genres.map(g=>g.def.name);
+  const M=S.corr;
+  const cellColor=(v)=>{ // -1..1
+    const t=(v+1)/2; return scoreColor(t*100);
+  };
+  let rows='';
+  for(let i=0;i<M.length;i++){
+    let tds='';
+    for(let j=0;j<M.length;j++){
+      const v=M[i][j];
+      const bg=i===j?'#2A3142':cellColor(v);
+      const txt=i===j?'–':(v>0?'':'')+v.toFixed(2).replace('0.','.').replace('-.','-.');
+      tds+=`<td style="background:${bg}">${i===j?'·':txt}</td>`;
+    }
+    rows+=`<tr><th class="row">${labels[i]}</th>${tds}</tr>`;
+  }
+  const head=`<tr><th></th>${labels.map(l=>`<th>${l.slice(0,2)}</th>`).join('')}</tr>`;
+  el.innerHTML=`<div class="heat">
+    <table class="hm">${head}${rows}</table>
+    <div class="legend"><span>−1 逆相関</span><div class="bar"></div><span>+1 同方向</span></div>
+    <p class="note" style="text-align:center">緑（琥珀）が濃いほど2ジャンルが同方向に動いている＝リスクオン/オフが連動。<br>全面が濃色になるほど市場は一枚岩のRORO相場です。</p>
+  </div>`;
+}
+
+/* ---- tabs ---- */
+document.querySelectorAll('.tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected','false'));
+    btn.setAttribute('aria-selected','true');
+    const t=btn.dataset.tab;
+    document.getElementById('view-genres').style.display = t==='genres'?'block':'none';
+    document.getElementById('view-compare').style.display= t==='compare'?'block':'none';
+    document.getElementById('view-pattern').style.display= t==='pattern'?'block':'none';
+  });
+});
+
+/* ---- refresh ---- */
+document.getElementById('refreshBtn').addEventListener('click',()=>{
+  SEED=Math.floor(Math.random()*1e9);   // デモ時は新スナップショット
+  init();                                // 実データ時は data.json を再取得
+});
+
+/* ============================================================
+   LIVE DATA HOOK  (swap point — keep everything above intact)
+   ------------------------------------------------------------
+   To go live on your mini PC, write a small fetcher (Node/Python)
+   that pulls the raw values below and serves them as data.json,
+   then replace the synthetic series in buildSnapshot() by reading
+   the latest values into each signal's .last.
+
+   Suggested free sources:
+     - Crypto F&G : https://api.alternative.me/fng/      (CORS OK, no key)
+     - FX rates   : https://api.frankfurter.app/latest   (no key)
+     - 株/指数/VIX/債券/コモディティ : Stooq CSV  e.g.
+         https://stooq.com/q/l/?s=^spx&f=sd2t2ohlcv&h&e=csv
+         (^vix, ^tnx 米10年, gc.f 金, hg.f 銅, cl.f 原油, hyg.us 等)
+       ※ CORSが不安定なので、ミニPC側で取得して data.json に書き出し
+         アプリはそれを読む構成が一番安定します（24/7運用に最適）。
+   ============================================================ */
+async function loadData(){
+  // データは GitHub(raw) から取得 → Netlifyのデプロイ枠を消費しない構成。
+  // raw は CORS '*' / cache ~5分。?t= でブラウザキャッシュだけ回避。
+  const DATA_URL = 'https://raw.githubusercontent.com/elgrandpapa-cloud/roro-data/main/data.json';
+  try{
+    const r = await fetch(DATA_URL + '?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) return null;
+    const j = await r.json();
+    return (j && j.signals) ? j : null;
+  }catch(e){ return null; }
+}
+
+/* LIVE/デモのバッジ表示を切り替え */
+function setLiveBadge(){
+  const pill=document.querySelector('.demo-pill');
+  if(LIVE){
+    pill.textContent='LIVE';
+    pill.style.color='var(--on)'; pill.style.borderColor='var(--on-hot)';
+    pill.style.background='rgba(232,176,75,.08)';
+    pill.title='data.json の実データを表示中';
+  }else{
+    pill.textContent='DEMO DATA';
+  }
+}
+
+/* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
+async function init(){
+  LIVE = await loadData();
+  setLiveBadge();
+  renderAll();
+  if(LIVE && LIVE.generated){
+    document.getElementById('stamp').textContent =
+      'data '+LIVE.generated.slice(0,16).replace('T',' ')+(LIVE.account?(' · '+LIVE.account):'');
+  }
+}
+init();
+</script>
+</body>
+</html>
