@@ -199,7 +199,7 @@
   <p class="note" id="noteText"></p>
 
   <div class="foot">
-    <button class="refresh" id="refreshBtn">↻ 再評価</button>
+    <button class="refresh" id="refreshBtn">↻ 更新</button>
     <span class="stamp" id="stamp"></span>
   </div>
 
@@ -592,9 +592,14 @@ document.querySelectorAll('.tabs button').forEach(btn=>{
 });
 
 /* ---- refresh ---- */
-document.getElementById('refreshBtn').addEventListener('click',()=>{
+document.getElementById('refreshBtn').addEventListener('click',async ()=>{
+  const b=document.getElementById('refreshBtn');
+  const orig=b.textContent;
+  b.disabled=true; b.textContent='⟳ 更新中…';
   SEED=Math.floor(Math.random()*1e9);   // デモ時は新スナップショット
-  init();                                // 実データ時は data.json を再取得
+  await init();                          // 実データ時は data.json を再取得
+  b.textContent= LIVE ? '✓ 最新です' : '↻ 更新';
+  setTimeout(()=>{ b.textContent=orig; b.disabled=false; }, 1500);
 });
 
 /* ============================================================
