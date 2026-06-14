@@ -463,7 +463,9 @@ function renderAll(){
     'スコアは各シグナルのリスクオン寄与（−1〜+1）を加重平均し 0〜100 に写像したもの。'+
     '50＝中立、上＝リスクオン（選好）、下＝リスクオフ（退避）。'+
     '「連動パターン」のヒートマップはジャンル間の30日相関で、全体が高相関＝RORO相場（単一マクロ要因が支配）を示します。'+
-    '<b style="color:var(--off)">表示はデモデータ</b>です — 末尾の loadData() に実データを差すと全ロジックそのまま稼働します。';
+    (LIVE
+      ? ('<b style="color:var(--on)">実データ表示中</b>'+(LIVE.generated?'（'+LIVE.generated.slice(0,16).replace('T',' ')+' 更新'+(LIVE.account?' · '+LIVE.account:'')+'）':'')+'。MT5＋無料Web APIから取得。')
+      : '<b style="color:var(--off)">表示はデモデータ</b>です — data.json を読み込めない時の合成表示。');
   const now=new Date();
   document.getElementById('stamp').textContent='snapshot '+now.toTimeString().slice(0,5)+' · demo';
 }
