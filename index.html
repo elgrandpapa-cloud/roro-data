@@ -940,9 +940,10 @@ function renderTech(live){
     s.textContent = '×'+v.size_mult; s.style.color = ac;
     const st = document.getElementById('tvStance');
     st.textContent = v.stance; st.style.color = ac;
+    const fds = (gf.dir_score!=null) ? ' '+(gf.dir_score>0?'+':'')+gf.dir_score : '';
     document.getElementById('tvBreak').innerHTML =
       '<span>テク '+t.summary+' '+(t.score>0?'+':'')+t.score+'</span>'+
-      '<span>顔 '+(gf.trend||'—')+'</span>'+
+      '<span>顔 '+(gf.trend||'—')+fds+'</span>'+
       '<span>ボラ '+(gf.vol_lab||'—')+'</span>'+
       (t.agreement!=null ? '<span>一致度 '+t.agreement+'</span>' : '');
     document.getElementById('tvReason').textContent = v.reason || '';
