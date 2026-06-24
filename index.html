@@ -771,7 +771,7 @@ function renderRegime6(live){
   el.style.display='block';
   const rowsL = ['強気','もみ合い','弱気'];
   const colsL = ['静か','荒れ'];
-  const names = [['強気・静か','強気・加速'],['もみ合い・静か','もみ合い・荒れ'],['弱気・静か','弱気・加速']];
+  const names = [['静か','加速'],['静か','荒れ'],['静か','加速']];
   const cr = gf.regime_row, cc = gf.regime_col;
   let html = '<div></div>';
   colsL.forEach(c => html += `<div class="g6-colh">${c}</div>`);
