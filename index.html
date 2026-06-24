@@ -176,6 +176,25 @@
   .gf-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55}
   .gf-note b{color:var(--txt-dim);font-weight:600}
 
+  /* ---- GOLD 6局面グリッド (参考・未検証) ---- */
+  .g6{padding:14px 16px 13px;margin-bottom:14px}
+  .g6-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .g6-title{font-size:14px;font-weight:700;letter-spacing:.12em}
+  .g6-title small{color:var(--txt-mute);font-weight:500;letter-spacing:.06em;font-size:9.5px;margin-left:8px;
+    border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .g6-now{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--gold-accent)}
+  .g6-grid{display:grid;grid-template-columns:60px 1fr 1fr;gap:6px}
+  .g6-colh{font-size:10px;color:var(--txt-mute);text-align:center;letter-spacing:.12em;text-transform:uppercase;
+    align-self:end;padding-bottom:2px}
+  .g6-rowh{font-size:11.5px;color:var(--txt-dim);display:flex;align-items:center;justify-content:flex-end;
+    padding-right:5px;font-weight:600}
+  .g6-cell{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:9px;padding:14px 6px;
+    text-align:center;font-size:11.5px;color:var(--txt-mute);transition:.2s}
+  .g6-cell.on{background:rgba(232,176,75,.16);border-color:var(--gold-accent);color:var(--txt);font-weight:700;
+    box-shadow:0 0 16px -3px rgba(232,176,75,.55)}
+  .g6-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55;margin-top:11px}
+  .g6-note b{color:var(--txt-dim);font-weight:600}
+
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
   }
@@ -216,6 +235,16 @@
     </div>
     <div class="gf-reasons" id="gfReasons"></div>
     <div class="gf-note" id="gfNote"></div>
+  </section>
+
+  <!-- GOLD 6局面 (参考・未検証) -->
+  <section class="g6 panel" id="g6" style="display:none">
+    <div class="g6-head">
+      <div class="g6-title">GOLD 6局面<small>参考・未検証</small></div>
+      <div class="g6-now" id="g6Now">—</div>
+    </div>
+    <div class="g6-grid" id="g6Grid"></div>
+    <div class="g6-note" id="g6Note"></div>
   </section>
 
   <!-- composite hero -->
@@ -734,11 +763,38 @@ function renderGoldFace(live){
     '裁量エントリーの<b>ロット天井と損切り幅</b>の目安です。危険＝小さく / 穏やか＝通常。最終判断はあなた。';
 }
 
+/* ---- GOLD 6局面(トレンド3×ボラ2) 描画。参考・未検証 ---- */
+function renderRegime6(live){
+  const el = document.getElementById('g6');
+  const gf = (live && live.gold_face) ? live.gold_face : null;
+  if(!gf || gf.status !== 'ok' || gf.regime6 == null){ el.style.display='none'; return; }
+  el.style.display='block';
+  const rowsL = ['強気','もみ合い','弱気'];
+  const colsL = ['静か','荒れ'];
+  const names = [['強気・静か','強気・加速'],['もみ合い・静か','もみ合い・荒れ'],['弱気・静か','弱気・加速']];
+  const cr = gf.regime_row, cc = gf.regime_col;
+  let html = '<div></div>';
+  colsL.forEach(c => html += `<div class="g6-colh">${c}</div>`);
+  for(let r=0;r<3;r++){
+    html += `<div class="g6-rowh">${rowsL[r]}</div>`;
+    for(let c=0;c<2;c++){
+      const on = (r===cr && c===cc);
+      html += `<div class="g6-cell${on?' on':''}">${names[r][c]}</div>`;
+    }
+  }
+  document.getElementById('g6Grid').innerHTML = html;
+  document.getElementById('g6Now').textContent = '現在 ' + gf.regime6;
+  document.getElementById('g6Note').innerHTML =
+    'トレンド（'+gf.trend+' / 値 '+gf.trend_norm+'）× ボラ（'+gf.vol_lab+'）の6マス分類。'+
+    '<b>方向は当てない参考表示で、検証していません</b>（信頼性不問の見える化）。';
+}
+
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
 async function init(){
   LIVE = await loadData();
   setLiveBadge();
   renderGoldFace(LIVE);
+  renderRegime6(LIVE);
   renderAll();
   if(LIVE && LIVE.generated){
     document.getElementById('stamp').textContent =
