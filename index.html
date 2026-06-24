@@ -240,7 +240,7 @@
   <!-- GOLD 6局面 (参考・未検証) -->
   <section class="g6 panel" id="g6" style="display:none">
     <div class="g6-head">
-      <div class="g6-title">GOLD 6局面<small>参考・未検証</small></div>
+      <div class="g6-title">GOLD 6局面<small>方向×ボラ</small></div>
       <div class="g6-now" id="g6Now">—</div>
     </div>
     <div class="g6-grid" id="g6Grid"></div>
@@ -784,9 +784,10 @@ function renderRegime6(live){
   }
   document.getElementById('g6Grid').innerHTML = html;
   document.getElementById('g6Now').textContent = '現在 ' + gf.regime6;
+  const up = (gf.dir_prob != null) ? Math.round(gf.dir_prob*100)+'%' : '—';
   document.getElementById('g6Note').innerHTML =
-    'トレンド（'+gf.trend+' / 値 '+gf.trend_norm+'）× ボラ（'+gf.vol_lab+'）の6マス分類。'+
-    '<b>方向は当てない参考表示で、検証していません</b>（信頼性不問の見える化）。';
+    '縦＝<b>方向の顔</b>（上昇確率 '+up+'）× 横＝<b>ボラの顔</b>（'+gf.vol_lab+'）。'+
+    'どちらも同じ白箱モデルの出力です。';
 }
 
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
