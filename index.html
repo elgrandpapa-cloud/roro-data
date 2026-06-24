@@ -237,6 +237,8 @@
   .tv-break{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
   .tv-break span{font-size:10.5px;padding:4px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt-dim)}
   .tv-reason{font-size:10.5px;color:var(--txt-mute);line-height:1.55;text-align:center}
+  .tech-subhd{font-size:10px;color:var(--txt-mute);letter-spacing:.1em;text-transform:uppercase;
+    margin:6px 0 4px;border-top:1px solid var(--line-soft);padding-top:11px}
 
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
@@ -328,6 +330,8 @@
       <div class="tech-agree" id="techAgree"></div>
       <div class="tv-break" id="tvBreak"></div>
       <div class="tv-reason" id="tvReason"></div>
+      <div class="tech-subhd">顔の内訳（世間テクと同形式・比較用）</div>
+      <div class="tech-rows" id="faceRows"></div>
     </div>
   </section>
 
@@ -943,6 +947,12 @@ function renderTech(live){
       (t.agreement!=null ? '<span>一致度 '+t.agreement+'</span>' : '');
     document.getElementById('tvReason').textContent = v.reason || '';
   }
+  // 顔の内訳(世間テクと同形式) — 横並び比較用
+  document.getElementById('faceRows').innerHTML = (gf.rows||[]).map(r=>{
+    const vc = r.vote==='買い'?'#46C28E':(r.vote==='売り'?'#F5564A':'#6B7488');
+    return '<div class="trow"><span class="tn">'+r.name+'</span><span class="tval">'+r.val+'</span>'+
+           '<span class="tvote" style="color:'+vc+'">'+r.vote+'</span></div>';
+  }).join('');
 }
 
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
