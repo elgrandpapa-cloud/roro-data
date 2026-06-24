@@ -197,6 +197,31 @@
   .g6-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55;margin-top:11px}
   .g6-note b{color:var(--txt-dim);font-weight:600}
 
+  /* ---- GOLD テクニカル方向 (世間の総合判定 × 顔) ---- */
+  .tech{padding:14px 16px 13px;margin-bottom:14px}
+  .tech-head{margin-bottom:12px}
+  .tech-title{font-size:14px;font-weight:700;letter-spacing:.12em}
+  .tech-title small{color:var(--txt-mute);font-weight:500;letter-spacing:.06em;font-size:9.5px;margin-left:8px;
+    border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .tech-main{display:flex;align-items:stretch;gap:12px;margin-bottom:11px}
+  .tech-badge{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;
+    letter-spacing:.05em;border-radius:12px;padding:16px 8px}
+  .tech-counts{flex:0 0 auto;min-width:80px;display:grid;gap:4px}
+  .tech-counts span{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--panel-2);
+    border:1px solid var(--line-soft);border-radius:7px;padding:4px 8px;text-align:center}
+  .tech-subs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .tech-sub{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:9px;padding:9px 10px;
+    font-size:11px;color:var(--txt-mute);display:flex;justify-content:space-between;align-items:center}
+  .tech-sub b{font-size:13px}
+  .tech-agree{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:11px 12px;
+    font-size:12px;color:var(--txt-dim);margin-bottom:11px;text-align:center}
+  .tech-agree b{font-family:"IBM Plex Mono",monospace;font-size:18px;color:var(--gold-accent)}
+  .tech-rows{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .trow{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px dashed var(--line-soft);padding:5px 0}
+  .trow .tn{font-size:11px;color:var(--txt-dim);flex:1;min-width:0}
+  .trow .tval{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--txt-mute)}
+  .trow .tvote{font-size:10.5px;font-weight:700;min-width:28px;text-align:right}
+
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
   }
@@ -247,6 +272,27 @@
     </div>
     <div class="g6-grid" id="g6Grid"></div>
     <div class="g6-note" id="g6Note"></div>
+  </section>
+
+  <!-- GOLD テクニカル方向 (世間の総合判定 × 顔の一致度) -->
+  <section class="tech panel" id="tech" style="display:none">
+    <div class="tech-head">
+      <div class="tech-title">GOLD テクニカル方向<small>世間の総合判定</small></div>
+    </div>
+    <div class="tech-main">
+      <div class="tech-badge" id="techBadge">—</div>
+      <div class="tech-counts">
+        <span id="techBuy">買 —</span>
+        <span id="techSell">売 —</span>
+        <span id="techNeu">中 —</span>
+      </div>
+    </div>
+    <div class="tech-subs">
+      <div class="tech-sub" id="techOsc"></div>
+      <div class="tech-sub" id="techMa"></div>
+    </div>
+    <div class="tech-agree" id="techAgree"></div>
+    <div class="tech-rows" id="techRows"></div>
   </section>
 
   <!-- composite hero -->
@@ -792,12 +838,51 @@ function renderRegime6(live){
     'どちらも同じ白箱モデルの出力です。';
 }
 
+/* ---- GOLD テクニカル方向(世間の総合判定) × 顔の一致度 ---- */
+function buySellColor(s){ // -100..+100  +買い=緑 / -売り=赤
+  const t = Math.max(0, Math.min(1, (s+100)/200));
+  const SELL=[245,86,74], NEU=[107,116,136], BUY=[70,194,142];
+  let c;
+  if(t<0.5){ const k=t/0.5; c=[lerp(SELL[0],NEU[0],k),lerp(SELL[1],NEU[1],k),lerp(SELL[2],NEU[2],k)]; }
+  else{ const k=(t-0.5)/0.5; c=[lerp(NEU[0],BUY[0],k),lerp(NEU[1],BUY[1],k),lerp(NEU[2],BUY[2],k)]; }
+  return '#'+hex(c[0])+hex(c[1])+hex(c[2]);
+}
+function renderTech(live){
+  const el = document.getElementById('tech');
+  const t = (live && live.gold_tech) ? live.gold_tech : null;
+  if(!t || t.status !== 'ok'){ el.style.display='none'; return; }
+  el.style.display='block';
+  const col = buySellColor(t.score);
+  const badge = document.getElementById('techBadge');
+  badge.textContent = t.summary + ' ' + (t.score>0?'+':'') + t.score;
+  badge.style.color = col;
+  badge.style.background = 'rgba('+[ (t.score>=0?70:245),(t.score>=0?194:86),(t.score>=0?142:74)].join(',')+',.13)';
+  badge.style.boxShadow = 'inset 0 0 0 1px '+col;
+  document.getElementById('techBuy').textContent = '買 ' + t.buy;
+  document.getElementById('techSell').textContent = '売 ' + t.sell;
+  document.getElementById('techNeu').textContent = '中 ' + t.neutral;
+  const o=t.oscillators, m=t.movingavg;
+  document.getElementById('techOsc').innerHTML = 'オシレーター <b style="color:'+buySellColor(o.score)+'">'+o.label+'</b>';
+  document.getElementById('techMa').innerHTML  = '移動平均 <b style="color:'+buySellColor(m.score)+'">'+m.label+'</b>';
+  const ag = document.getElementById('techAgree');
+  if(t.agreement != null){
+    ag.style.display='block';
+    ag.innerHTML = '顔 × テクニカルの一致度 <b>'+t.agreement+'</b> / 100 ・ '+t.agreement_label;
+  } else { ag.style.display='none'; }
+  document.getElementById('techRows').innerHTML = (t.rows||[]).map(r=>{
+    const vc = r.vote==='買い'?'#46C28E':(r.vote==='売り'?'#F5564A':'#6B7488');
+    return '<div class="trow"><span class="tn">'+r.name+'</span><span class="tval">'+r.val+'</span>'+
+           '<span class="tvote" style="color:'+vc+'">'+r.vote+'</span></div>';
+  }).join('');
+}
+
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
 async function init(){
   LIVE = await loadData();
   setLiveBadge();
   renderGoldFace(LIVE);
   renderRegime6(LIVE);
+  renderTech(LIVE);
   renderAll();
   if(LIVE && LIVE.generated){
     document.getElementById('stamp').textContent =
