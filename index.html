@@ -221,6 +221,22 @@
   .trow .tn{font-size:11px;color:var(--txt-dim);flex:1;min-width:0}
   .trow .tval{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--txt-mute)}
   .trow .tvote{font-size:10.5px;font-weight:700;min-width:28px;text-align:right}
+  .tech-tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:13px}
+  .tech-tabs button{flex:1;background:transparent;border:0;color:var(--txt-dim);font-family:inherit;font-size:12px;
+    font-weight:600;letter-spacing:.03em;padding:8px 4px;border-radius:8px;cursor:pointer;transition:.18s}
+  .tech-tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+  /* 顔テクニカル判定 */
+  .tv-main{display:flex;align-items:stretch;gap:12px;margin-bottom:11px}
+  .tv-action{flex:1;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;
+    letter-spacing:.1em;border-radius:12px;padding:18px 8px}
+  .tv-size{flex:0 0 auto;min-width:100px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:8px}
+  .tv-size-num{font-family:"IBM Plex Mono",monospace;font-size:32px;font-weight:600;line-height:1}
+  .tv-size-cap{font-size:10px;color:var(--txt-mute);letter-spacing:.1em;margin-top:5px}
+  .tv-stance{text-align:center;font-size:14px;font-weight:600;margin-bottom:11px}
+  .tv-break{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
+  .tv-break span{font-size:10.5px;padding:4px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt-dim)}
+  .tv-reason{font-size:10.5px;color:var(--txt-mute);line-height:1.55;text-align:center}
 
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
@@ -277,22 +293,42 @@
   <!-- GOLD テクニカル方向 (世間の総合判定 × 顔の一致度) -->
   <section class="tech panel" id="tech" style="display:none">
     <div class="tech-head">
-      <div class="tech-title">GOLD テクニカル方向<small>世間の総合判定</small></div>
+      <div class="tech-title">GOLD テクニカル</div>
     </div>
-    <div class="tech-main">
-      <div class="tech-badge" id="techBadge">—</div>
-      <div class="tech-counts">
-        <span id="techBuy">買 —</span>
-        <span id="techSell">売 —</span>
-        <span id="techNeu">中 —</span>
+    <div class="tech-tabs" role="tablist">
+      <button data-ttab="world" aria-selected="true">世間のテクニカル</button>
+      <button data-ttab="face" aria-selected="false">顔テクニカル</button>
+    </div>
+
+    <div id="tech-world">
+      <div class="tech-main">
+        <div class="tech-badge" id="techBadge">—</div>
+        <div class="tech-counts">
+          <span id="techBuy">買 —</span>
+          <span id="techSell">売 —</span>
+          <span id="techNeu">中 —</span>
+        </div>
       </div>
+      <div class="tech-subs">
+        <div class="tech-sub" id="techOsc"></div>
+        <div class="tech-sub" id="techMa"></div>
+      </div>
+      <div class="tech-rows" id="techRows"></div>
     </div>
-    <div class="tech-subs">
-      <div class="tech-sub" id="techOsc"></div>
-      <div class="tech-sub" id="techMa"></div>
+
+    <div id="tech-face" style="display:none">
+      <div class="tv-main">
+        <div class="tv-action" id="tvAction">—</div>
+        <div class="tv-size">
+          <div class="tv-size-num" id="tvSize">—</div>
+          <div class="tv-size-cap">推奨サイズ</div>
+        </div>
+      </div>
+      <div class="tv-stance" id="tvStance"></div>
+      <div class="tech-agree" id="techAgree"></div>
+      <div class="tv-break" id="tvBreak"></div>
+      <div class="tv-reason" id="tvReason"></div>
     </div>
-    <div class="tech-agree" id="techAgree"></div>
-    <div class="tech-rows" id="techRows"></div>
   </section>
 
   <!-- composite hero -->
@@ -724,6 +760,17 @@ document.querySelectorAll('.tabs button').forEach(btn=>{
   });
 });
 
+/* ---- テクニカルのタブ(世間 / 顔テクニカル) ---- */
+document.querySelectorAll('.tech-tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tech-tabs button').forEach(b=>b.setAttribute('aria-selected','false'));
+    btn.setAttribute('aria-selected','true');
+    const t=btn.dataset.ttab;
+    document.getElementById('tech-world').style.display = t==='world'?'block':'none';
+    document.getElementById('tech-face').style.display  = t==='face'?'block':'none';
+  });
+});
+
 /* ---- refresh ---- */
 document.getElementById('refreshBtn').addEventListener('click',async ()=>{
   const b=document.getElementById('refreshBtn');
@@ -874,6 +921,28 @@ function renderTech(live){
     return '<div class="trow"><span class="tn">'+r.name+'</span><span class="tval">'+r.val+'</span>'+
            '<span class="tvote" style="color:'+vc+'">'+r.vote+'</span></div>';
   }).join('');
+
+  // --- 顔テクニカル(テクニカルに顔を乗せた判定) ---
+  const v = t.verdict, gf = (live && live.gold_face) ? live.gold_face : {};
+  if(v){
+    const rgb = v.action==='買い'?'70,194,142':(v.action==='売り'?'245,86,74':'107,116,136');
+    const ac = '#'+[ v.action==='買い'?'46':(v.action==='売り'?'F5':'6B'),
+                     v.action==='買い'?'C2':(v.action==='売り'?'56':'74'),
+                     v.action==='買い'?'8E':(v.action==='売り'?'4A':'88') ].join('');
+    const a = document.getElementById('tvAction');
+    a.textContent = v.action; a.style.color = ac;
+    a.style.background = 'rgba('+rgb+',.14)'; a.style.boxShadow = 'inset 0 0 0 1px '+ac;
+    const s = document.getElementById('tvSize');
+    s.textContent = '×'+v.size_mult; s.style.color = ac;
+    const st = document.getElementById('tvStance');
+    st.textContent = v.stance; st.style.color = ac;
+    document.getElementById('tvBreak').innerHTML =
+      '<span>テク '+t.summary+' '+(t.score>0?'+':'')+t.score+'</span>'+
+      '<span>顔 '+(gf.trend||'—')+'</span>'+
+      '<span>ボラ '+(gf.vol_lab||'—')+'</span>'+
+      (t.agreement!=null ? '<span>一致度 '+t.agreement+'</span>' : '');
+    document.getElementById('tvReason').textContent = v.reason || '';
+  }
 }
 
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
