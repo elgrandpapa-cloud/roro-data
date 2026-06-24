@@ -3,13 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RORO Console</title>
+<title>GOLD顔 · RORO</title>
 
 <!-- iOS home-screen / PWA hints -->
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="RORO">
+<meta name="apple-mobile-web-app-title" content="GOLD顔">
 <meta name="theme-color" content="#0B0E14">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -145,6 +148,34 @@
   .refresh:active{transform:scale(.97)}
   .stamp{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--txt-mute)}
 
+  /* ---- GOLD FACE (主役パネル) ---- */
+  .gface{padding:16px 16px 14px;margin-bottom:14px;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel-2),var(--panel))}
+  .gf-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .gf-title{font-size:14px;font-weight:700;letter-spacing:.12em}
+  .gf-title small{color:var(--txt-mute);font-weight:500;letter-spacing:.04em;font-size:10.5px;margin-left:7px}
+  .gf-price{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--txt-dim)}
+  .gf-main{display:flex;align-items:stretch;gap:14px;margin-bottom:14px}
+  .gf-badge{flex:1;font-size:30px;font-weight:700;letter-spacing:.06em;padding:16px 10px;border-radius:12px;
+    text-align:center;display:flex;align-items:center;justify-content:center}
+  .gf-size{flex:0 0 auto;text-align:center;min-width:104px;display:flex;flex-direction:column;justify-content:center;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:8px}
+  .gf-size-num{font-family:"IBM Plex Mono",monospace;font-size:34px;font-weight:600;line-height:1}
+  .gf-size-cap{font-size:10px;color:var(--txt-mute);letter-spacing:.1em;margin-top:5px}
+  .gf-meter{position:relative;height:10px;border-radius:6px;
+    background:linear-gradient(90deg,#46C28E,#E8B04B 55%,#F5564A);margin:2px 0 7px}
+  .gf-fill{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);
+    border:2px solid var(--bg);background:#fff;box-shadow:0 0 10px rgba(0,0,0,.55);transition:left .5s cubic-bezier(.22,1,.36,1)}
+  .gf-ticks{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.1em;color:var(--txt-mute);text-transform:uppercase}
+  .gf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:13px 0 11px}
+  .gf-stat{background:var(--panel);border:1px solid var(--line-soft);border-radius:9px;padding:8px 5px;text-align:center}
+  .gf-stat span{display:block;font-size:9px;color:var(--txt-mute);letter-spacing:.03em;margin-bottom:3px}
+  .gf-stat b{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600}
+  .gf-reasons{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+  .gf-chip{font-size:10.5px;padding:4px 9px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--txt-dim)}
+  .gf-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55}
+  .gf-note b{color:var(--txt-dim);font-weight:600}
+
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
   }
@@ -161,6 +192,31 @@
     </div>
     <span class="demo-pill" title="表示中の数値はデモデータです。loadData() に実データを差すとそのまま動きます。">DEMO DATA</span>
   </header>
+
+  <!-- GOLD FACE : 主役(危険度=サイズ予算) -->
+  <section class="gface panel" id="gface" style="display:none">
+    <div class="gf-head">
+      <div class="gf-title">GOLD 顔<small>危険度・サイズの目安</small></div>
+      <div class="gf-price" id="gfPrice">—</div>
+    </div>
+    <div class="gf-main">
+      <div class="gf-badge" id="gfBadge">—</div>
+      <div class="gf-size">
+        <div class="gf-size-num" id="gfSize">—</div>
+        <div class="gf-size-cap">推奨サイズ</div>
+      </div>
+    </div>
+    <div class="gf-meter"><div class="gf-fill" id="gfFill"></div></div>
+    <div class="gf-ticks"><span>穏やか</span><span>中間</span><span>危険</span></div>
+    <div class="gf-stats">
+      <div class="gf-stat"><span>スコア</span><b id="gfScore">—</b></div>
+      <div class="gf-stat"><span>ボラ</span><b id="gfVol">—</b></div>
+      <div class="gf-stat"><span>想定値幅24h</span><b id="gfRange">—</b></div>
+      <div class="gf-stat"><span>損切り目安</span><b id="gfStop">—</b></div>
+    </div>
+    <div class="gf-reasons" id="gfReasons"></div>
+    <div class="gf-note" id="gfNote"></div>
+  </section>
 
   <!-- composite hero -->
   <section class="hero">
@@ -644,10 +700,45 @@ function setLiveBadge(){
   }
 }
 
+/* ---- GOLD 顔(危険度=サイズ予算) 描画。data.json の gold_face を読む ---- */
+const GF_COLORS = {
+  '危険':   {c:'#F5564A', bg:'rgba(245,86,74,.14)'},
+  '中間':   {c:'#E8B04B', bg:'rgba(232,176,75,.13)'},
+  '穏やか': {c:'#46C28E', bg:'rgba(70,194,142,.13)'},
+};
+function renderGoldFace(live){
+  const el = document.getElementById('gface');
+  const gf = (live && live.gold_face) ? live.gold_face : null;
+  if(!gf || gf.status !== 'ok'){ el.style.display='none'; return; }  // 無ければ隠す(デモ時)
+  el.style.display='block';
+  const fc = GF_COLORS[gf.face] || GF_COLORS['中間'];
+  const badge = document.getElementById('gfBadge');
+  badge.textContent = gf.face;
+  badge.style.color = fc.c;
+  badge.style.background = fc.bg;
+  badge.style.boxShadow = 'inset 0 0 0 1px '+fc.c;
+  const sz = document.getElementById('gfSize');
+  sz.textContent = '×'+gf.size_mult; sz.style.color = fc.c;
+  document.getElementById('gfScore').textContent = (gf.score!=null? gf.score : '—');
+  document.getElementById('gfVol').textContent   = gf.vol_state || '—';
+  document.getElementById('gfRange').textContent = (gf.range_today_usd!=null ? '$'+gf.range_today_usd : '—');
+  document.getElementById('gfStop').textContent  = (gf.stop_suggest_usd!=null ? '$'+gf.stop_suggest_usd : '—');
+  document.getElementById('gfPrice').textContent = (gf.price!=null ? '$'+gf.price : '');
+  const sc = Math.max(0, Math.min(100, gf.score!=null? gf.score : 50));
+  document.getElementById('gfFill').style.left = sc+'%';
+  document.getElementById('gfReasons').innerHTML =
+    (gf.reasons||[]).map(r=>`<span class="gf-chip">${r.name} ${r.dir}</span>`).join('');
+  const conf = (gf.confidence!=null) ? Math.round(gf.confidence*100)+'%' : '—';
+  document.getElementById('gfNote').innerHTML =
+    '確信度 '+conf+' ・ 方向は予測しません（方向はnull確定）。これは<b>前方3hの高ボラ局面＝危険度</b>の読み取りで、'+
+    '裁量エントリーの<b>ロット天井と損切り幅</b>の目安です。危険＝小さく / 穏やか＝通常。最終判断はあなた。';
+}
+
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
 async function init(){
   LIVE = await loadData();
   setLiveBadge();
+  renderGoldFace(LIVE);
   renderAll();
   if(LIVE && LIVE.generated){
     document.getElementById('stamp').textContent =
