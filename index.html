@@ -240,6 +240,20 @@
   .tech-subhd{font-size:10px;color:var(--txt-mute);letter-spacing:.1em;text-transform:uppercase;
     margin:6px 0 4px;border-top:1px solid var(--line-soft);padding-top:11px}
 
+  /* ---- 下落モニター ---- */
+  .dl{padding:14px 16px 13px;margin-bottom:14px}
+  .dl-head{margin-bottom:11px}
+  .dl-title{font-size:14px;font-weight:700;letter-spacing:.12em}
+  .dl-title small{color:var(--txt-mute);font-weight:500;letter-spacing:.04em;font-size:9.5px;margin-left:8px}
+  .dl-rows{display:flex;flex-direction:column;gap:8px}
+  .dl-row{display:flex;align-items:center;gap:11px;background:var(--panel-2);border:1px solid var(--line-soft);
+    border-radius:10px;padding:10px 12px}
+  .dl-sym{font-weight:700;font-size:14px;min-width:52px}
+  .dl-badge{font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px}
+  .dl-dist{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--txt-mute);margin-left:auto}
+  .dl-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55;margin-top:10px}
+  .dl-note b{color:var(--txt-dim);font-weight:600}
+
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
   }
@@ -332,6 +346,18 @@
       <div class="tv-reason" id="tvReason"></div>
       <div class="tech-subhd">顔の内訳（世間テクと同形式・比較用）</div>
       <div class="tech-rows" id="faceRows"></div>
+    </div>
+  </section>
+
+  <!-- 下落モニター -->
+  <section class="dl panel" id="decline" style="display:none">
+    <div class="dl-head">
+      <div class="dl-title">下落モニター<small>指数=手動アラート / 暗号=自動ショート可</small></div>
+    </div>
+    <div class="dl-rows" id="dlRows"></div>
+    <div class="dl-note">
+      <b>US500=アラート</b>（下落の約65%を捕捉・2×／精度は低く<b>手動ショート判断用</b>）。
+      <b>BTC・ETH=ショート区間</b>（下降トレンド＝自動ショートが成立する局面・点灯で執行）。gold下落は検出不可のため非表示。
     </div>
   </section>
 
@@ -956,6 +982,36 @@ function renderTech(live){
   }).join('');
 }
 
+/* ---- 下落モニター(指数アラート / 暗号ショート区間) ---- */
+function renderDecline(live){
+  const el = document.getElementById('decline');
+  const d = (live && live.decline) ? live.decline : null;
+  if(!d){ el.style.display='none'; return; }
+  const RGB = {'#F5564A':'245,86,74','#46C28E':'70,194,142','#E8B04B':'232,176,75','#6B7488':'107,116,136'};
+  let html = '', any = false;
+  [['US500'],['BTC'],['ETH']].forEach(([sym])=>{
+    const v = d[sym];
+    if(!v || v.status !== 'ok') return;
+    any = true;
+    let label, col, dist;
+    if(v.kind === 'alert'){
+      label = v.alert ? (v.fast ? '警戒(急下降)' : '警戒(下降)') : '通常(上方)';
+      col = v.alert ? '#F5564A' : '#46C28E';
+      dist = 'SMA50 ' + (v.dist_sma50_pct>0?'+':'') + v.dist_sma50_pct + '%';
+    } else {
+      label = v.state;
+      col = v.trigger ? '#F5564A' : (v.short_on ? '#E8B04B' : '#6B7488');
+      dist = 'SMA200 ' + (v.dist_sma200_pct>0?'+':'') + v.dist_sma200_pct + '%';
+    }
+    html += '<div class="dl-row"><span class="dl-sym">'+sym+'</span>'+
+            '<span class="dl-badge" style="color:'+col+';background:rgba('+RGB[col]+',.14)">'+label+'</span>'+
+            '<span class="dl-dist">'+dist+'</span></div>';
+  });
+  if(!any){ el.style.display='none'; return; }
+  el.style.display='block';
+  document.getElementById('dlRows').innerHTML = html;
+}
+
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
 async function init(){
   LIVE = await loadData();
@@ -963,6 +1019,7 @@ async function init(){
   renderGoldFace(LIVE);
   renderRegime6(LIVE);
   renderTech(LIVE);
+  renderDecline(LIVE);
   renderAll();
   if(LIVE && LIVE.generated){
     document.getElementById('stamp').textContent =
