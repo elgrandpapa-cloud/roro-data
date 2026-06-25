@@ -987,7 +987,7 @@ function renderDecline(live){
   const el = document.getElementById('decline');
   const d = (live && live.decline) ? live.decline : null;
   if(!d){ el.style.display='none'; return; }
-  const RGB = {'#F5564A':'245,86,74','#46C28E':'70,194,142','#E8B04B':'232,176,75','#6B7488':'107,116,136'};
+  const RGB = {'#F5564A':'245,86,74','#46C28E':'70,194,142','#E8B04B':'232,176,75','#6B7488':'107,116,136','#3DA8E8':'61,168,232'};
   let html = '', any = false;
   [['US500'],['BTC'],['ETH']].forEach(([sym])=>{
     const v = d[sym];
@@ -999,8 +999,9 @@ function renderDecline(live){
       col = v.alert ? '#F5564A' : '#46C28E';
       dist = 'SMA50 ' + (v.dist_sma50_pct>0?'+':'') + v.dist_sma50_pct + '%';
     } else {
-      label = v.state;
-      col = v.trigger ? '#F5564A' : (v.short_on ? '#E8B04B' : '#6B7488');
+      const act = v.action || '';
+      label = v.state + (act ? ' / ' + act : '');
+      col = act==='エントリー'?'#F5564A' : (act==='手仕舞い検討'?'#3DA8E8' : (act==='保持'?'#E8B04B' : '#6B7488'));
       dist = 'SMA200 ' + (v.dist_sma200_pct>0?'+':'') + v.dist_sma200_pct + '%';
     }
     html += '<div class="dl-row"><span class="dl-sym">'+sym+'</span>'+
