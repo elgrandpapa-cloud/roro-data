@@ -254,6 +254,28 @@
   .dl-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55;margin-top:10px}
   .dl-note b{color:var(--txt-dim);font-weight:600}
 
+  /* ---- 市場の健康 ---- */
+  .mh{padding:14px 16px 13px;margin-bottom:14px}
+  .mh-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  .mh-title{font-size:14px;font-weight:700;letter-spacing:.12em}
+  .mh-title small{color:var(--txt-mute);font-weight:500;letter-spacing:.04em;font-size:9.5px;margin-left:8px}
+  .mh-score{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600}
+  .mh-meter{position:relative;height:10px;border-radius:6px;
+    background:linear-gradient(90deg,#F5564A,#E8B04B 50%,#46C28E);margin:2px 0 6px}
+  .mh-fill{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);
+    border:2px solid var(--bg);background:#fff;box-shadow:0 0 10px rgba(0,0,0,.55);transition:left .5s cubic-bezier(.22,1,.36,1)}
+  .mh-ticks{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.1em;color:var(--txt-mute);text-transform:uppercase}
+  .mh-sub{font-size:11px;color:var(--txt-dim);margin:9px 0 10px}
+  .mh-sub b{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--gold-accent)}
+  .mh-rows{display:flex;flex-direction:column;gap:6px}
+  .mh-row{display:flex;align-items:center;gap:9px}
+  .mh-n{font-size:11px;color:var(--txt-dim);min-width:54px}
+  .mh-bar{flex:1;height:7px;border-radius:4px;background:var(--panel-2);overflow:hidden}
+  .mh-bar div{height:100%;border-radius:4px;transition:width .5s}
+  .mh-v{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--txt-mute);min-width:26px;text-align:right}
+  .mh-note{font-size:10.5px;color:var(--txt-mute);line-height:1.55;margin-top:10px}
+  .mh-note b{color:var(--txt-dim);font-weight:600}
+
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;transition:none !important}
   }
@@ -358,6 +380,22 @@
     <div class="dl-note">
       <b>US500=アラート</b>（下落の約65%を捕捉・2×／精度は低く<b>手動ショート判断用</b>）。
       <b>BTC・ETH=ショート区間</b>（下降トレンド＝自動ショートが成立する局面・点灯で執行）。gold下落は検出不可のため非表示。
+    </div>
+  </section>
+
+  <!-- 市場の健康 (breadth断面=下落の先行) -->
+  <section class="mh panel" id="mhealth" style="display:none">
+    <div class="mh-head">
+      <div class="mh-title">市場の健康<small>下落の先行 リフト2.4×</small></div>
+      <div class="mh-score" id="mhScore">—</div>
+    </div>
+    <div class="mh-meter"><div class="mh-fill" id="mhFill"></div></div>
+    <div class="mh-ticks"><span>警戒</span><span>中立</span><span>健康</span></div>
+    <div class="mh-sub" id="mhSub"></div>
+    <div class="mh-rows" id="mhRows"></div>
+    <div class="mh-note">
+      健康が低いほどUS500の下落が先行（不健康時<b>リフト2.4×</b>・全期間/前後半で単調）。
+      主役はVIX/トレンド、breadth（広さ/risk/信用/小型）は弱めの新情報上乗せ。
     </div>
   </section>
 
@@ -1013,6 +1051,30 @@ function renderDecline(live){
   document.getElementById('dlRows').innerHTML = html;
 }
 
+/* ---- 市場の健康(breadth=下落の先行) ---- */
+function renderHealth(live){
+  const el = document.getElementById('mhealth');
+  const m = (live && live.market_health) ? live.market_health : null;
+  if(!m || m.status !== 'ok'){ el.style.display='none'; return; }
+  el.style.display='block';
+  const h = m.health;
+  const hcol = h>=67 ? '#46C28E' : (h<33 ? '#F5564A' : '#E8B04B');
+  const sc = document.getElementById('mhScore');
+  sc.textContent = h + ' / 100 ' + (m.verdict || ''); sc.style.color = hcol;
+  document.getElementById('mhFill').style.left = Math.max(0, Math.min(100, h)) + '%';
+  document.getElementById('mhSub').innerHTML =
+    'うち breadth（新情報） <b>' + (m.breadth!=null?m.breadth:'—') + '</b> / 100';
+  const order = ['広さ','risk','信用','小型','トレンド','恐怖'];
+  const c = m.components || {};
+  document.getElementById('mhRows').innerHTML = order.map(k=>{
+    const v = c[k]; if(v == null) return '';
+    const col = v>=67 ? '#46C28E' : (v<33 ? '#F5564A' : '#E8B04B');
+    return '<div class="mh-row"><span class="mh-n">'+k+'</span>'+
+           '<div class="mh-bar"><div style="width:'+v+'%;background:'+col+'"></div></div>'+
+           '<span class="mh-v">'+v+'</span></div>';
+  }).join('');
+}
+
 /* 起動: data.json を読んでから描画。再評価ボタンも再取得する。 */
 async function init(){
   LIVE = await loadData();
@@ -1021,6 +1083,7 @@ async function init(){
   renderRegime6(LIVE);
   renderTech(LIVE);
   renderDecline(LIVE);
+  renderHealth(LIVE);
   renderAll();
   if(LIVE && LIVE.generated){
     document.getElementById('stamp').textContent =
