@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-28T00:39:22+08:00",
+  "generated": "2026-06-28T01:09:43+08:00",
   "account": "65761@XSFintech-DEMO",
   "signals": {
     "eq_sp500": {
@@ -723,9 +723,9 @@
         -3.6068,
         -7.0699,
         -6.4143,
-        -5.68
+        -5.9644
       ],
-      "last": -5.68,
+      "last": -5.9644,
       "prev": -6.4143
     },
     "cr_eth": {
@@ -789,9 +789,9 @@
         -5.6079,
         -9.9398,
         -8.7065,
-        -7.4919
+        -8.0682
       ],
-      "last": -7.4919,
+      "last": -8.0682,
       "prev": -8.7065
     },
     "vol_vix": {
@@ -1402,8 +1402,8 @@
       "trigger": false,
       "state": "ショート保持",
       "action": "保持",
-      "dist_sma200_pct": -19.9,
-      "price": 60738.2
+      "dist_sma200_pct": -20.2,
+      "price": 60513.0
     },
     "ETH": {
       "status": "ok",
@@ -1412,8 +1412,8 @@
       "trigger": false,
       "state": "ショート保持",
       "action": "保持",
-      "dist_sma200_pct": -30.9,
-      "price": 1602.3
+      "dist_sma200_pct": -31.4,
+      "price": 1590.9
     }
   },
   "market_health": {
